@@ -1,8 +1,9 @@
-import socket
 import asyncore
-import random
 import pickle
-from hogpong.constants import SIDE_ENUMERATION, RIGTH_SIDE, LEFT_SIDE
+import random
+import socket
+
+from hogpong.constants import SIDE_ENUMERATION
 
 BUFFERSIZE = 512
 
@@ -18,6 +19,7 @@ class Paddle:
         self.vertical = True
         self.ownerid = ownerid
         self.side = SIDE_ENUMERATION[0]
+
 
 class Ball:
     def __init__(self):
@@ -58,14 +60,25 @@ def updateWorld(message):
         update = ["player locations"]
 
         for key, value in paddle_map.items():
-            update.append([value.ownerid, value.x, value.y, value.vertical, value.side, ball_x, ball_y, ball_xv, ball_yv])
+            update.append(
+                [
+                    value.ownerid,
+                    value.x,
+                    value.y,
+                    value.vertical,
+                    value.side,
+                    ball_x,
+                    ball_y,
+                    ball_xv,
+                    ball_yv,
+                ]
+            )
 
         try:
             i.send(pickle.dumps(update))
         except Exception:
             remove.append(i)
             continue
-
 
         for r in remove:
             outgoing.remove(r)

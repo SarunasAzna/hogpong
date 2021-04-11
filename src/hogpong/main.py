@@ -1,9 +1,9 @@
 import logging
 import sys
 
-from hogpong.server import run_server
 from hogpong.game import run_game
 from hogpong.parser import parse_args
+from hogpong.server import run_server
 
 __author__ = "Sarunas Azna"
 __copyright__ = "Sarunas Azna"
