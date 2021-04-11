@@ -3,7 +3,7 @@ from pygame.locals import *
 import pickle
 import select
 import socket
-from hogpong.constants import SIDE_ENUMERATION, RIGTH_SIDE, LEFT_SIDE
+from hogpong.constants import SIDE_ENUMERATION, RIGTH_SIDE, LEFT_SIDE, TOP_SIDE, BOTTOM_SIDE
 
 ### General Parameters
 WHITE = (255, 255, 255)
@@ -42,29 +42,6 @@ def drawpaddle(screen, x, y, w, h):
 def drawball(screen, x, y):
     pygame.draw.circle(screen, WHITE, (int(x), int(y)), int(BALL_WIDTH))
 
-def uploc():
-    global p1y
-    global p2y
-    if w_p:
-        if p1y-(dm) < 0:
-            py1 = 0
-        else:
-            p1y -= dm
-    elif s_p:
-        if p1y+(dm)+paddle_height > H:
-            p1y = H-paddle_height
-        else:
-            p1y += dm
-    if u_p:
-        if p2y-(dm) < 0:
-            p2y = 0
-        else:
-            p2y -= dm
-    elif d_p:
-        if p2y+(dm)+paddle_height > H:
-            p2y = H-paddle_height
-        else:
-            p2y += dm
 
 def select_paddle_near_the_ball(paddles, side):
     selected = [p for p in paddles if p.side == side]
@@ -81,6 +58,8 @@ def upblnv(paddles):
 
     left_x_limit = PADDLE_WIDTH + p1x
     righ_x_limit = WIDTH - (p1x if len(paddles) >1 else 0)
+    top_y_limit = p1x if len(paddles) > 2 else 0
+    bottom_y_limit = HEIGHT - (p1x if len(paddles) > 2 else 0)
     estimated_x = bx + bxv
     estimated_y = by + byv
 
@@ -101,10 +80,33 @@ def upblnv(paddles):
         if paddle is None:
             pass
         elif paddle.y < estimated_y < paddle.y + PADDLE_HEIGHT:
-            byv = byv = ((paddle.y + (paddle.y + PADDLE_HEIGHT)) / 2) - by
+            byv = ((paddle.y + (paddle.y + PADDLE_HEIGHT)) / 2) - by
             byv = -byv / ((5 * BALL_WIDTH) / 7)
         else:
             bxv, bxy, bx, by = INITIAL_BXV, INITIAL_BYV, INITIAL_BX, INITIAL_BY
+
+    if estimated_y > bottom_y_limit:
+        paddle = select_paddle_near_the_ball(paddles, BOTTOM_SIDE)
+        byv = -byv
+        if paddle is None:
+            pass
+        elif paddle.x < estimated_x < paddle.x + PADDLE_HEIGHT:
+            bxv = ((paddle.x + (paddle.x + PADDLE_HEIGHT)) / 2) - bx
+            bxv = -bxv / ((5 * BALL_WIDTH) / 7)
+        else:
+            bxv, bxy, bx, by = INITIAL_BXV, INITIAL_BYV, INITIAL_BX, INITIAL_BY
+
+    if estimated_y < top_y_limit:
+        paddle = select_paddle_near_the_ball(paddles, TOP_SIDE)
+        byv = -byv
+        if paddle is None:
+            pass
+        elif paddle.x < estimated_x < paddle.x + PADDLE_HEIGHT:
+            bxv = ((paddle.x + (paddle.x + PADDLE_HEIGHT)) / 2) - bx
+            bxv = -bxv / ((5 * BALL_WIDTH) / 7)
+        else:
+            bxv, bxy, bx, by = INITIAL_BXV, INITIAL_BYV, INITIAL_BX, INITIAL_BY
+
 
     #if (bx+bxv < p1x+paddle_width) and ((p1y < by+byv+bw) and (by+byv-bw < p1y+paddle_height)):
     #    bxv = -bxv
