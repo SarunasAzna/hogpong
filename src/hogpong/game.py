@@ -17,7 +17,7 @@ from hogpong.constants import (
 # General Parameters
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-WIDTH = HEIGHT = 1200
+WIDTH = HEIGHT = 600
 BUFFERSIZE = 2048
 
 # Paddle parameters
@@ -194,11 +194,11 @@ def run_game(host="127.0.0.1"):
                                 side=minion[4],
                             )
                         )
-                        if minion[4] == LEFT_SIDE and cc.id == 0:
-                            bx = minion[5]
-                            by = minion[6]
-                            bxv = minion[7]
-                            byv = minion[8]
+                        bx = minion[5]
+                        by = minion[6]
+                        bxv = minion[7]
+                        byv = minion[8]
+        bx, by, bxv, byv = upblnv(paddles + [cc], bx, by, bxv, byv)
 
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -223,10 +223,9 @@ def run_game(host="127.0.0.1"):
                 if event.key == K_DOWN and cc.vy == 10:
                     cc.vy = 0
 
-        clock.tick(60)
+        clock.tick(120)
         screen.fill(BLACK)
 
-        bx, by, bxv, byv = upblnv(paddles + [cc], bx, by, bxv, byv)
         drawball(screen, bx, by)
 
         cc.update()
