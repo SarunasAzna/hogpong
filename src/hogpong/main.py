@@ -12,7 +12,6 @@ __license__ = "MIT"
 _logger = logging.getLogger(__name__)
 
 
-
 def setup_logging(loglevel):
     """Setup basic logging
 

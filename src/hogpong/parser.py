@@ -4,7 +4,6 @@ import logging
 from hogpong import __version__
 
 
-
 def parse_args(args):
     """Parse command line parameters
 

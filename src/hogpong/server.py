@@ -13,6 +13,7 @@ class Minion:
     def __init__(self, ownerid):
         self.x = 50
         self.y = 50
+        self.vertical = True
         self.ownerid = ownerid
 
 
@@ -21,23 +22,26 @@ minionmap = {}
 
 def updateWorld(message):
     arr = pickle.loads(message)
-    #print(str(arr))
+    # print(str(arr))
     playerid = arr[1]
     x = arr[2]
     y = arr[3]
+    vertical = arr[4]
 
-    if playerid == 0: return
+    if playerid == 0:
+        return
 
     minionmap[playerid].x = x
     minionmap[playerid].y = y
+    minionmap[playerid].vertical = vertical
 
     remove = []
 
     for i in outgoing:
-        update = ['player locations']
+        update = ["player locations"]
 
         for key, value in minionmap.items():
-            update.append([value.ownerid, value.x, value.y])
+            update.append([value.ownerid, value.x, value.y, value.vertical])
 
         try:
             i.send(pickle.dumps(update))
@@ -45,7 +49,7 @@ def updateWorld(message):
             remove.append(i)
             continue
 
-        #print('sent update data')
+        # print('sent update data')
 
         for r in remove:
             outgoing.remove(r)
@@ -55,17 +59,18 @@ class MainServer(asyncore.dispatcher):
     def __init__(self, port):
         asyncore.dispatcher.__init__(self)
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.bind(('', port))
+        self.bind(("", port))
         self.listen(10)
 
     def handle_accept(self):
         conn, addr = self.accept()
-        #print('Connection address:' + addr[0] + " " + str(addr[1]))
+        # print('Connection address:' + addr[0] + " " + str(addr[1]))
         outgoing.append(conn)
         playerid = random.randint(1000, 1000000)
+        position = len(minionmap)
         playerminion = Minion(playerid)
         minionmap[playerid] = playerminion
-        conn.send(pickle.dumps(['id update', playerid, len(minionmap)]))
+        conn.send(pickle.dumps(["id update", playerid, position]))
         SecondaryServer(conn)
 
 
