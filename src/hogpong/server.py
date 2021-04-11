@@ -3,6 +3,7 @@ import asyncore
 import random
 import pickle
 import time
+from hogpong.constants import SIDE_ENUMERATION, RIGTH_SIDE, LEFT_SIDE
 
 BUFFERSIZE = 512
 
@@ -15,6 +16,7 @@ class Paddle:
         self.y = 50
         self.vertical = True
         self.ownerid = ownerid
+        self.side = SIDE_ENUMERATION[0]
 
 
 paddle_map = {}
@@ -27,6 +29,7 @@ def updateWorld(message):
     x = arr[2]
     y = arr[3]
     vertical = arr[4]
+    side = arr[5]
 
     if playerid == 0:
         return
@@ -34,6 +37,7 @@ def updateWorld(message):
     paddle_map[playerid].x = x
     paddle_map[playerid].y = y
     paddle_map[playerid].vertical = vertical
+    paddle_map[playerid].side = side
 
     remove = []
 
@@ -41,7 +45,7 @@ def updateWorld(message):
         update = ["player locations"]
 
         for key, value in paddle_map.items():
-            update.append([value.ownerid, value.x, value.y, value.vertical])
+            update.append([value.ownerid, value.x, value.y, value.vertical, value.side])
 
         try:
             i.send(pickle.dumps(update))

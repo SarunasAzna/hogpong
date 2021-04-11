@@ -3,6 +3,7 @@ from pygame.locals import *
 import pickle
 import select
 import socket
+from hogpong.constants import SIDE_ENUMERATION, RIGTH_SIDE, LEFT_SIDE
 
 ### General Parameters
 WHITE = (255, 255, 255)
@@ -24,11 +25,14 @@ INITIAL_PADDLE_POSITIONS = ((p1x, p1y), (p2x, p2y), (p1y, p1x), (p2y, p2x))
 
 # Ball parameters
 BALL_WIDTH = WIDTH / 120
-bx = HEIGHT/2
-by = HEIGHT/2
-bw = WIDTH/65
-bxv = HEIGHT/180
-byv = 0
+INITIAL_BX = HEIGHT/2
+INITIAL_BY = HEIGHT/2
+bx = INITIAL_BX
+by = INITIAL_BY
+INITIAL_BXV= HEIGHT/180
+INITIAL_BYV = 0
+bxv = INITIAL_BXV
+byv = INITIAL_BYV
 
 
 def drawpaddle(screen, x, y, w, h):
@@ -62,6 +66,13 @@ def uploc():
         else:
             p2y += dm
 
+def select_paddle_near_the_ball(paddles, side):
+    selected = [p for p in paddles if p.side == side]
+    if selected:
+        return selected[0]
+
+
+
 def upblnv(paddles):
     global bx
     global bxv
@@ -71,10 +82,29 @@ def upblnv(paddles):
     left_x_limit = PADDLE_WIDTH + p1x
     righ_x_limit = WIDTH - (p1x if len(paddles) >1 else 0)
     estimated_x = bx + bxv
+    estimated_y = by + byv
+
     if estimated_x > righ_x_limit:
+        paddle = select_paddle_near_the_ball(paddles, RIGTH_SIDE)
         bxv = -bxv
+        if paddle is None:
+            pass
+        elif paddle.y < estimated_y < paddle.y + PADDLE_HEIGHT:
+            byv = byv = ((paddle.y+(paddle.y+PADDLE_HEIGHT))/2)-by
+            byv = -byv/((5*BALL_WIDTH)/7)
+        else:
+            bxv, bxy, bx, by = INITIAL_BXV, INITIAL_BYV, INITIAL_BX, INITIAL_BY
+
     if estimated_x < left_x_limit:
+        paddle = select_paddle_near_the_ball(paddles, LEFT_SIDE)
         bxv = -bxv
+        if paddle is None:
+            pass
+        elif paddle.y < estimated_y < paddle.y + PADDLE_HEIGHT:
+            byv = byv = ((paddle.y + (paddle.y + PADDLE_HEIGHT)) / 2) - by
+            byv = -byv / ((5 * BALL_WIDTH) / 7)
+        else:
+            bxv, bxy, bx, by = INITIAL_BXV, INITIAL_BYV, INITIAL_BX, INITIAL_BY
 
     #if (bx+bxv < p1x+paddle_width) and ((p1y < by+byv+bw) and (by+byv-bw < p1y+paddle_height)):
     #    bxv = -bxv
@@ -120,13 +150,14 @@ def run_game(host="127.0.0.1"):
     playerid = 0
 
     class Paddle:
-        def __init__(self, x, y, id, vertical=True):
+        def __init__(self, x, y, id, vertical=True, side="right"):
             self.x = x
             self.y = y
             self.vertical = vertical
             self.vx = 0
             self.vy = 0
             self.id = id
+            self.side = side
 
         def update(self):
             if self.vertical:
@@ -186,13 +217,14 @@ def run_game(host="127.0.0.1"):
                 position = gameEvent[2]
                 cc.x, cc.y = INITIAL_PADDLE_POSITIONS[position]
                 cc.vertical = position <= 1
+                cc.side = SIDE_ENUMERATION[position]
             if gameEvent[0] == "player locations":
                 gameEvent.pop(0)
                 paddles = []
                 for minion in gameEvent:
                     if minion[0] != playerid:
                         paddles.append(
-                            Paddle(minion[1], minion[2], minion[0], vertical=minion[3])
+                            Paddle(minion[1], minion[2], minion[0], vertical=minion[3], side=minion[4])
                         )
 
         for event in pygame.event.get():
@@ -233,6 +265,6 @@ def run_game(host="127.0.0.1"):
 
         pygame.display.flip()
 
-        ge = ["position update", playerid, cc.x, cc.y, cc.vertical]
+        ge = ["position update", playerid, cc.x, cc.y, cc.vertical, cc.side]
         s.send(pickle.dumps(ge))
     s.close()
