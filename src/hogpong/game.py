@@ -3,16 +3,14 @@ from pygame.locals import *
 import pickle
 import select
 import socket
-from hogpong.parser import parse_args
 
-### Colors
+### General Parameters
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 WIDTH = HEIGHT = 1200
 BUFFERSIZE = 2048
-ball_x = HEIGHT / 2
-ball_y = HEIGHT / 2
-BALL_WIDTH = WIDTH / 120
+
+# Paddle parameters
 PADDLE_WIDTH = HEIGHT / 90
 PADDLE_HEIGHT = PADDLE_WIDTH ** 2
 
@@ -24,6 +22,14 @@ p2y = HEIGHT / 2 - ((PADDLE_WIDTH) ** 2) / 2
 
 INITIAL_PADDLE_POSITIONS = ((p1x, p1y), (p2x, p2y), (p1y, p1x), (p2y, p2x))
 
+# Ball parameters
+BALL_WIDTH = WIDTH / 120
+bx = HEIGHT/2
+by = HEIGHT/2
+bw = WIDTH/65
+bxv = HEIGHT/180
+byv = 0
+
 
 def drawpaddle(screen, x, y, w, h):
     pygame.draw.rect(screen, WHITE, (x, y, w, h))
@@ -31,6 +37,70 @@ def drawpaddle(screen, x, y, w, h):
 
 def drawball(screen, x, y):
     pygame.draw.circle(screen, WHITE, (int(x), int(y)), int(BALL_WIDTH))
+
+def uploc():
+    global p1y
+    global p2y
+    if w_p:
+        if p1y-(dm) < 0:
+            py1 = 0
+        else:
+            p1y -= dm
+    elif s_p:
+        if p1y+(dm)+paddle_height > H:
+            p1y = H-paddle_height
+        else:
+            p1y += dm
+    if u_p:
+        if p2y-(dm) < 0:
+            p2y = 0
+        else:
+            p2y -= dm
+    elif d_p:
+        if p2y+(dm)+paddle_height > H:
+            p2y = H-paddle_height
+        else:
+            p2y += dm
+
+def upblnv(paddles):
+    global bx
+    global bxv
+    global by
+    global byv
+
+    left_x_limit = PADDLE_WIDTH + p1x
+    righ_x_limit = WIDTH - (p1x if len(paddles) >1 else 0)
+    estimated_x = bx + bxv
+    if estimated_x > righ_x_limit:
+        bxv = -bxv
+    if estimated_x < left_x_limit:
+        bxv = -bxv
+
+    #if (bx+bxv < p1x+paddle_width) and ((p1y < by+byv+bw) and (by+byv-bw < p1y+paddle_height)):
+    #    bxv = -bxv
+    #    byv = ((p1y+(p1y+paddle_height))/2)-by
+    #    byv = -byv/((5*bw)/7)
+    #elif bx+bxv < 0:
+    #    p2score += 1
+    #    bx = W/2
+    #    bxv = H/60
+    #    by = H/2
+    #    byv = 0
+    #if (bx+bxv > p2x) and ((p2y < by+byv+bw) and (by+byv-bw < p2y+paddle_height)):
+    #    bxv = -bxv
+    #    byv = ((p2y+(p2y+paddle_height))/2)-by
+    #    byv = -byv/((5*bw)/7)
+    #elif bx+bxv > W:
+    #    p1score += 1
+    #    bx = W/2
+    #    bxv = -H/60
+    #    by = H/2
+    #    byv = 0
+    #if by+byv > H or by+byv < 0:
+    #    byv = -byv
+
+    bx += bxv
+    by += byv
 
 
 def run_game(host="127.0.0.1"):
@@ -49,7 +119,7 @@ def run_game(host="127.0.0.1"):
 
     playerid = 0
 
-    class Minion:
+    class Paddle:
         def __init__(self, x, y, id, vertical=True):
             self.x = x
             self.y = y
@@ -102,9 +172,9 @@ def run_game(host="127.0.0.1"):
             self.vx = vx
             self.vy = vy
 
-    cc = Minion(0, 0, 0)
+    cc = Paddle(0, 0, 0)
 
-    minions = []
+    paddles = []
     position = 0
 
     while True:
@@ -118,11 +188,11 @@ def run_game(host="127.0.0.1"):
                 cc.vertical = position <= 1
             if gameEvent[0] == "player locations":
                 gameEvent.pop(0)
-                minions = []
+                paddles = []
                 for minion in gameEvent:
                     if minion[0] != playerid:
-                        minions.append(
-                            Minion(minion[1], minion[2], minion[0], vertical=minion[3])
+                        paddles.append(
+                            Paddle(minion[1], minion[2], minion[0], vertical=minion[3])
                         )
 
         for event in pygame.event.get():
@@ -150,11 +220,13 @@ def run_game(host="127.0.0.1"):
 
         clock.tick(60)
         screen.fill(BLACK)
-        drawball(screen, ball_x, ball_y)
+
+        upblnv(paddles + [cc])
+        drawball(screen, bx, by)
 
         cc.update()
 
-        for m in minions:
+        for m in paddles:
             m.render()
 
         cc.render()

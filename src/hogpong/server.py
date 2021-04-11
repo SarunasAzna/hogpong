@@ -9,7 +9,7 @@ BUFFERSIZE = 512
 outgoing = []
 
 
-class Minion:
+class Paddle:
     def __init__(self, ownerid):
         self.x = 50
         self.y = 50
@@ -17,7 +17,7 @@ class Minion:
         self.ownerid = ownerid
 
 
-minionmap = {}
+paddle_map = {}
 
 
 def updateWorld(message):
@@ -31,16 +31,16 @@ def updateWorld(message):
     if playerid == 0:
         return
 
-    minionmap[playerid].x = x
-    minionmap[playerid].y = y
-    minionmap[playerid].vertical = vertical
+    paddle_map[playerid].x = x
+    paddle_map[playerid].y = y
+    paddle_map[playerid].vertical = vertical
 
     remove = []
 
     for i in outgoing:
         update = ["player locations"]
 
-        for key, value in minionmap.items():
+        for key, value in paddle_map.items():
             update.append([value.ownerid, value.x, value.y, value.vertical])
 
         try:
@@ -67,9 +67,9 @@ class MainServer(asyncore.dispatcher):
         # print('Connection address:' + addr[0] + " " + str(addr[1]))
         outgoing.append(conn)
         playerid = random.randint(1000, 1000000)
-        position = len(minionmap)
-        playerminion = Minion(playerid)
-        minionmap[playerid] = playerminion
+        position = len(paddle_map)
+        player_paddle = Paddle(playerid)
+        paddle_map[playerid] = player_paddle
         conn.send(pickle.dumps(["id update", playerid, position]))
         SecondaryServer(conn)
 
