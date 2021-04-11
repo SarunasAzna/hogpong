@@ -50,11 +50,7 @@ def select_paddle_near_the_ball(paddles, side):
 
 
 
-def upblnv(paddles):
-    global bx
-    global bxv
-    global by
-    global byv
+def upblnv(paddles, bx, by, bxv, byv):
 
     left_x_limit = PADDLE_WIDTH + p1x
     righ_x_limit = WIDTH - (p1x if len(paddles) >1 else 0)
@@ -69,7 +65,7 @@ def upblnv(paddles):
         if paddle is None:
             pass
         elif paddle.y < estimated_y < paddle.y + PADDLE_HEIGHT:
-            byv = byv = ((paddle.y+(paddle.y+PADDLE_HEIGHT))/2)-by
+            byv = ((paddle.y+(paddle.y+PADDLE_HEIGHT))/2)-by
             byv = -byv/((5*BALL_WIDTH)/7)
         else:
             bxv, bxy, bx, by = INITIAL_BXV, INITIAL_BYV, INITIAL_BX, INITIAL_BY
@@ -108,31 +104,9 @@ def upblnv(paddles):
             bxv, bxy, bx, by = INITIAL_BXV, INITIAL_BYV, INITIAL_BX, INITIAL_BY
 
 
-    #if (bx+bxv < p1x+paddle_width) and ((p1y < by+byv+bw) and (by+byv-bw < p1y+paddle_height)):
-    #    bxv = -bxv
-    #    byv = ((p1y+(p1y+paddle_height))/2)-by
-    #    byv = -byv/((5*bw)/7)
-    #elif bx+bxv < 0:
-    #    p2score += 1
-    #    bx = W/2
-    #    bxv = H/60
-    #    by = H/2
-    #    byv = 0
-    #if (bx+bxv > p2x) and ((p2y < by+byv+bw) and (by+byv-bw < p2y+paddle_height)):
-    #    bxv = -bxv
-    #    byv = ((p2y+(p2y+paddle_height))/2)-by
-    #    byv = -byv/((5*bw)/7)
-    #elif bx+bxv > W:
-    #    p1score += 1
-    #    bx = W/2
-    #    bxv = -H/60
-    #    by = H/2
-    #    byv = 0
-    #if by+byv > H or by+byv < 0:
-    #    byv = -byv
-
     bx += bxv
     by += byv
+    return bx, by, bxv, byv
 
 
 def run_game(host="127.0.0.1"):
@@ -184,31 +158,12 @@ def run_game(host="127.0.0.1"):
                 if self.vertical
                 else (PADDLE_HEIGHT, PADDLE_WIDTH)
             )
-            drawpaddle(screen, self.x, self.y, width, height)
-
-    # game events
-    # ['event type', param1, param2]
-    #
-    # event types:
-    # id update
-    # ['id update', id]
-    #
-    # player locations
-    # ['player locations', [id, x, y], [id, x, y] ...]
-
-    # user commands
-    # position update
-    # ['position update', id, x, y]
-
-    class GameEvent:
-        def __init__(self, vx, vy):
-            self.vx = vx
-            self.vy = vy
+            pygame.draw.rect(screen, WHITE, (self.x, self.y, width, height))
 
     cc = Paddle(0, 0, 0)
+    bx, by, bxv, byv = INITIAL_BX, INITIAL_BY, INITIAL_BXV, INITIAL_BYV
 
     paddles = []
-    position = 0
 
     while True:
         ins, outs, ex = select.select([s], [], [], 0)
@@ -220,14 +175,21 @@ def run_game(host="127.0.0.1"):
                 cc.x, cc.y = INITIAL_PADDLE_POSITIONS[position]
                 cc.vertical = position <= 1
                 cc.side = SIDE_ENUMERATION[position]
+                if position > 3:
+                    raise NotImplementedError("Too many players")
             if gameEvent[0] == "player locations":
                 gameEvent.pop(0)
                 paddles = []
-                for minion in gameEvent:
+                for i, minion in enumerate(gameEvent):
                     if minion[0] != playerid:
                         paddles.append(
                             Paddle(minion[1], minion[2], minion[0], vertical=minion[3], side=minion[4])
                         )
+                        if minion[4] == LEFT_SIDE:
+                            bx = minion[5]
+                            by = minion[6]
+                            bxv = minion[7]
+                            byv = minion[8]
 
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -255,7 +217,7 @@ def run_game(host="127.0.0.1"):
         clock.tick(60)
         screen.fill(BLACK)
 
-        upblnv(paddles + [cc])
+        bx, by, bxv, byv = upblnv(paddles + [cc], bx, by, bxv, byv)
         drawball(screen, bx, by)
 
         cc.update()
@@ -267,6 +229,6 @@ def run_game(host="127.0.0.1"):
 
         pygame.display.flip()
 
-        ge = ["position update", playerid, cc.x, cc.y, cc.vertical, cc.side]
+        ge = ["position update", playerid, cc.x, cc.y, cc.vertical, cc.side, bx, by, bxv, byv]
         s.send(pickle.dumps(ge))
     s.close()
