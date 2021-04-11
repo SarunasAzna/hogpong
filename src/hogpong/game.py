@@ -27,12 +27,8 @@ INITIAL_PADDLE_POSITIONS = ((p1x, p1y), (p2x, p2y), (p1y, p1x), (p2y, p2x))
 BALL_WIDTH = WIDTH / 120
 INITIAL_BX = HEIGHT/2
 INITIAL_BY = HEIGHT/2
-bx = INITIAL_BX
-by = INITIAL_BY
 INITIAL_BXV= HEIGHT/180
 INITIAL_BYV = 0
-bxv = INITIAL_BXV
-byv = INITIAL_BYV
 
 
 def drawpaddle(screen, x, y, w, h):
@@ -185,7 +181,7 @@ def run_game(host="127.0.0.1"):
                         paddles.append(
                             Paddle(minion[1], minion[2], minion[0], vertical=minion[3], side=minion[4])
                         )
-                        if minion[4] == LEFT_SIDE:
+                        if minion[4] == LEFT_SIDE and cc.id == 0:
                             bx = minion[5]
                             by = minion[6]
                             bxv = minion[7]
