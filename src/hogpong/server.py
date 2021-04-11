@@ -21,7 +21,7 @@ minionmap = {}
 
 def updateWorld(message):
     arr = pickle.loads(message)
-    print(str(arr))
+    #print(str(arr))
     playerid = arr[1]
     x = arr[2]
     y = arr[3]
@@ -45,7 +45,7 @@ def updateWorld(message):
             remove.append(i)
             continue
 
-        print('sent update data')
+        #print('sent update data')
 
         for r in remove:
             outgoing.remove(r)
@@ -60,12 +60,12 @@ class MainServer(asyncore.dispatcher):
 
     def handle_accept(self):
         conn, addr = self.accept()
-        print('Connection address:' + addr[0] + " " + str(addr[1]))
+        #print('Connection address:' + addr[0] + " " + str(addr[1]))
         outgoing.append(conn)
         playerid = random.randint(1000, 1000000)
         playerminion = Minion(playerid)
         minionmap[playerid] = playerminion
-        conn.send(pickle.dumps(['id update', playerid]))
+        conn.send(pickle.dumps(['id update', playerid, len(minionmap)]))
         SecondaryServer(conn)
 
 
@@ -80,5 +80,4 @@ class SecondaryServer(asyncore.dispatcher_with_send):
 
 def run_server():
     MainServer(4321)
-    print("ad")
     asyncore.loop()

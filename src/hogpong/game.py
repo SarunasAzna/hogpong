@@ -5,29 +5,47 @@ import select
 import socket
 from hogpong.parser import parse_args
 
+### Colors
+WHITE = (255, 255, 255)
+BLACK = (0,0,0)
+WIDTH = HEIGHT = 1200
+BUFFERSIZE = 2048
+ball_x = HEIGHT/2
+ball_y = HEIGHT/2
+BALL_WIDTH = WIDTH/120
+PADDLE_WIDTH = HEIGHT/90
+PADDLE_HEIGHT = PADDLE_WIDTH**2
+p1x = WIDTH/30
+p1y = HEIGHT/2 - (PADDLE_WIDTH**2)/2
+
+p2x = WIDTH-(WIDTH/30)
+p2y = HEIGHT/2 - ((WIDTH/60)**2)/2
+
+INITIAL_PADDLE_POSITIONS = ((p1x, p1y), (p2x, p2y))
+
+
+def drawpaddle(screen, x, y, w, h):
+    pygame.draw.rect(screen, WHITE, (x, y, w, h))
+
+def drawball(screen, x, y):
+    pygame.draw.circle(screen, WHITE, (int(x), int(y)), int(BALL_WIDTH))
+
 def run_game(host="127.0.0.1"):
-    WIDTH = 400
-    HEIGHT = 400
-    BUFFERSIZE = 2048
 
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
-    pygame.display.set_caption('Game')
+    pygame.display.set_caption('HogPong')
+    screen.fill(BLACK)
+    pygame.display.flip()
 
     clock = pygame.time.Clock()
 
     serverAddr = host
-
-    sprite1 = pygame.image.load('images/BlueThing/BlueThing_front.png')
-    sprite2 = pygame.image.load('images/Ladette/Ladette_front.png')
-    sprite3 = pygame.image.load('images/TrashPanda/TrashPanda_front.png')
-    sprite4 = pygame.image.load('images/Tubby/Tubby_front.png')
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((serverAddr, 4321))
 
     playerid = 0
 
-    sprites = {0: sprite1, 1: sprite2, 2: sprite3, 3: sprite4}
 
 
     class Minion:
@@ -55,7 +73,9 @@ def run_game(host="127.0.0.1"):
                 self.id = playerid
 
         def render(self):
-            screen.blit(sprites[self.id % 4], (self.x, self.y))
+            x, y = INITIAL_PADDLE_POSITIONS[self.id % 4] if self.x is None else (self.x, self.y)
+            drawpaddle(screen, self.x, self.y, PADDLE_WIDTH, PADDLE_HEIGHT)
+            #screen.blit(sprites[self.id % 4], (self.x, self.y))
 
 
     # game events
@@ -77,6 +97,7 @@ def run_game(host="127.0.0.1"):
             self.vx = vx
             self.vy = vy
 
+    minion_created = False
 
     cc = Minion(50, 50, 0)
 
@@ -88,7 +109,7 @@ def run_game(host="127.0.0.1"):
             gameEvent = pickle.loads(inm.recv(BUFFERSIZE))
             if gameEvent[0] == 'id update':
                 playerid = gameEvent[1]
-                print(playerid)
+                cc.x, cc.y = INITIAL_PADDLE_POSITIONS[gameEvent[2] - 1]
             if gameEvent[0] == 'player locations':
                 gameEvent.pop(0)
                 minions = []
@@ -112,7 +133,8 @@ def run_game(host="127.0.0.1"):
                 if event.key == K_DOWN and cc.vy == 10: cc.vy = 0
 
         clock.tick(60)
-        screen.fill((255, 255, 255))
+        screen.fill(BLACK)
+        drawball(screen, ball_x, ball_y)
 
         cc.update()
 
