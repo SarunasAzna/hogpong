@@ -26,3 +26,4 @@ RESOURCES
 * https://www.pygame.org/news
 * https://codereview.stackexchange.com/questions/194308/simple-python-pong-game
 * https://github.com/PlainSight/pygameblog
+* https://pypi.org/project/PyScaffold/
